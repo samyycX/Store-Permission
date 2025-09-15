@@ -79,6 +79,20 @@ public class StorePermissionStorage
     ExecuteAsync("INSERT INTO store_permissions (steamid, item) VALUES (@steamid, @item)", new { steamid, item });
   }
 
+    // Remove a permission item from a user. If the user has no more items, remove the user from the dictionary.
+    public void RemovePermissionItem(ulong steamid, string item)
+  {
+    if (_PermissionItems.ContainsKey(steamid))
+    {
+      _PermissionItems[steamid].Remove(item);
+      if (_PermissionItems[steamid].Count == 0)
+      {
+        _PermissionItems.Remove(steamid);
+      }
+    }
+    ExecuteAsync("DELETE FROM store_permissions WHERE steamid=@steamid AND item=@item LIMIT 1", new { steamid, item });
+  }
+
   public bool HasPermissionItem(ulong steamid, string item)
   {
     if (_PermissionItems.ContainsKey(steamid))

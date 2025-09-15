@@ -1,10 +1,14 @@
 {
   "menu.title": "购买模型",
   "menu.bought": "已购买",
+  "menu.manage": "管理 {0}",
+  "menu.sell": "出售 (返还 {0})",
+  "menu.back": "返回",
   "menu.confirmtitle": "确认要购买{0}吗?",
   "menu.confirm": "确认 [{0}]",
   "menu.cancel": "取消",
   "menu.instruction": "[W/S] 滚动 - [D] 选择 - [A] 返回 - [Tab] 关闭",
   "buy.insufficientcredits": "{red}你没有足够的积分购买{0}。",
-  "buy.success": "{green}购买{0}成功！"
+  "buy.success": "{green}购买{0}成功！",
+  "sell.success": "{green}已出售 {0}，返还 {1} 积分。"
 }

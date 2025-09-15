@@ -8,16 +8,16 @@
     ".NETCoreApp,Version=v8.0": {
       "Store-Permission/1.0.0": {
         "dependencies": {
-          "CounterStrikeSharp.API": "1.0.286",
+          "CounterStrikeSharp.API": "1.0.339",
           "Dapper": "2.1.35",
           "MySqlConnector": "2.3.7",
-          "StoreApi": "1.0.0.0"
+          "StoreApi": "24.0.0.0"
         },
         "runtime": {
           "Store-Permission.dll": {}
         }
       },
-      "CounterStrikeSharp.API/1.0.286": {
+      "CounterStrikeSharp.API/1.0.339": {
         "dependencies": {
           "McMaster.NETCore.Plugins": "1.4.0",
           "Microsoft.CSharp": "4.7.0",
@@ -30,7 +30,8 @@
           "Serilog.Extensions.Logging": "8.0.0",
           "Serilog.Sinks.Console": "5.0.0",
           "Serilog.Sinks.File": "5.0.0",
-          "System.Data.DataSetExtensions": "4.5.0"
+          "System.Data.DataSetExtensions": "4.5.0",
+          "Tomlyn": "0.19.0"
         }
       },
       "Dapper/2.1.35": {
@@ -317,11 +318,12 @@
           "System.Text.Encodings.Web": "8.0.0"
         }
       },
-      "StoreApi/1.0.0.0": {
+      "Tomlyn/0.19.0": {},
+      "StoreApi/24.0.0.0": {
         "runtime": {
           "StoreApi.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
+            "assemblyVersion": "24.0.0.0",
+            "fileVersion": "24.0.0.0"
           }
         }
       }
@@ -333,12 +335,12 @@
       "serviceable": false,
       "sha512": ""
     },
-    "CounterStrikeSharp.API/1.0.286": {
+    "CounterStrikeSharp.API/1.0.339": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-THw0WcvFx3q0sUR77Flm5FQTBg+xp+zaasLLCxCntQI5I9aqvDp/87gtedELMe0/X1HvZZb6wAPaYtwh3Iztnw==",
-      "path": "counterstrikesharp.api/1.0.286",
-      "hashPath": "counterstrikesharp.api.1.0.286.nupkg.sha512"
+      "sha512": "sha512-0gJ6dBB0cicdhgfSkRe50gQjdVDo/vo6N8ZxG7As6Fz6QDPnF/brxY7Tn8MWlD74zY+ynd8UHL8W6mRrDPVtPA==",
+      "path": "counterstrikesharp.api/1.0.339",
+      "hashPath": "counterstrikesharp.api.1.0.339.nupkg.sha512"
     },
     "Dapper/2.1.35": {
       "type": "package",
@@ -676,7 +678,14 @@
       "path": "system.text.json/8.0.0",
       "hashPath": "system.text.json.8.0.0.nupkg.sha512"
     },
-    "StoreApi/1.0.0.0": {
+    "Tomlyn/0.19.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GlI2o8R8jbZIaE+YX6uA/VoAOH7zIxYeqxDm7jHW2hqUhuB+q19oKold35FkMuv8IZDoCqsTMolaBv2eBLBmrQ==",
+      "path": "tomlyn/0.19.0",
+      "hashPath": "tomlyn.0.19.0.nupkg.sha512"
+    },
+    "StoreApi/24.0.0.0": {
       "type": "reference",
       "serviceable": false,
       "sha512": ""

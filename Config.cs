@@ -1,4 +1,5 @@
 using CounterStrikeSharp.API.Core;
+using System.Text.Json.Serialization;
 
 namespace StorePermission;
 
@@ -12,7 +13,13 @@ public class StorePermissionConfig : BasePluginConfig
 
     public List<string> Commands { get; set; } = ["bp"];
 
-    public Dictionary<string, PermissionItem> Items = new() {
+    // Global sell ratio (refund percentage of original price when selling an owned permission item)
+    public double SellRatio { get; set; } = 0.5; // default
+
+    // Change from field to property so it can be deserialized from JSON.
+    [JsonPropertyName("Items")]
+    public Dictionary<string, PermissionItem> Items { get; set; } = new()
+    {
         {
             "item1", new PermissionItem {
                 Price = 100,
