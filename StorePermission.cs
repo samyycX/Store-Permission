@@ -6,14 +6,11 @@ using StoreApi;
 
 namespace StorePermission;
 
-
-
 public class StorePermission : BasePlugin, IPluginConfig<StorePermissionConfig>
 {
   public override string ModuleName => "Store Module [Permissions]";
-  public override string ModuleVersion => "0.0.1";
+  public override string ModuleVersion => "0.0.3";
   public override string ModuleAuthor => "samyyc";
-
 
   public required IStoreApi StoreApi { get; set; }
   public StorePermissionConfig Config { get; set; } = new();
@@ -21,22 +18,19 @@ public class StorePermission : BasePlugin, IPluginConfig<StorePermissionConfig>
   public required ModelMenuManager MenuManager { get; set; } = new();
   private static StorePermission? _Instance { get; set; }
 
-  public static StorePermission getInstance()
-  {
-    return _Instance!;
-  }
+  public static StorePermission getInstance() => _Instance!;
 
   public override void Load(bool hotReload)
   {
     _Instance = this;
     RegisterEventHandler<EventPlayerActivate>((@event, info) =>
-        {
-          if (@event.Userid != null)
-          {
-            MenuManager.AddPlayer(@event.Userid.Slot, new ModelMenuPlayer { Player = @event.Userid, Buttons = 0 });
-          }
-          return HookResult.Continue;
-        });
+    {
+      if (@event.Userid != null)
+      {
+        MenuManager.AddPlayer(@event.Userid.Slot, new ModelMenuPlayer { Player = @event.Userid, Buttons = 0 });
+      }
+      return HookResult.Continue;
+    });
 
     RegisterEventHandler<EventPlayerDisconnect>((@event, info) =>
     {
@@ -46,10 +40,9 @@ public class StorePermission : BasePlugin, IPluginConfig<StorePermissionConfig>
       }
       return HookResult.Continue;
     });
-    RegisterListener<Listeners.OnTick>(() =>
-    {
-      MenuManager.Update();
-    });
+
+    RegisterListener<Listeners.OnTick>(() => { MenuManager.Update(); });
+
     if (hotReload)
     {
       MenuManager.ReloadPlayer();
@@ -70,6 +63,7 @@ public class StorePermission : BasePlugin, IPluginConfig<StorePermissionConfig>
   {
     StoreApi = IStoreApi.Capability.Get() ?? throw new Exception("StoreApi could not be located.");
   }
+
   public void GivePlayerPermission(CCSPlayerController player, List<string> permissions)
   {
     permissions.ForEach(permission =>
@@ -84,91 +78,152 @@ public class StorePermission : BasePlugin, IPluginConfig<StorePermissionConfig>
       }
     });
   }
+
+  // 原路撤销: 与添加时的逻辑对称
+  public void RemovePlayerPermission(CCSPlayerController player, List<string> permissions)
+  {
+    permissions.ForEach(permission =>
+    {
+      try
+      {
+        if (permission.StartsWith("@"))
+        {
+          AdminManager.RemovePlayerPermissions(player, [permission]);
+        }
+        else
+        {
+          // removeInheritedFlags=true: 同时撤销该组附带的 flags
+          AdminManager.RemovePlayerFromGroup(player, true, permission);
+        }
+      }
+      catch { }
+    });
+  }
+
   public void GivePlayerPermissionItem(CCSPlayerController player, string itemName)
   {
-    PermissionItem item = Config.Items[itemName];
+    var item = Config.Items[itemName];
     GivePlayerPermission(player, item.Permissions);
     Storage.AddPermissionItem(player.AuthorizedSteamID!.SteamId64, itemName);
+  }
+
+  public void RemovePlayerPermissionItem(CCSPlayerController player, string itemName)
+  {
+    if (!Config.Items.ContainsKey(itemName)) return;
+    var item = Config.Items[itemName];
+    RemovePlayerPermission(player, item.Permissions);
+  }
+
+  public void SellPlayerPermissionItem(CCSPlayerController player, string itemName)
+  {
+    if (!Storage.HasPermissionItem(player.AuthorizedSteamID!.SteamId64, itemName)) return;
+    if (!Config.Items.ContainsKey(itemName)) return;
+
+    var item = Config.Items[itemName];
+    var ratio = Math.Clamp(Config.SellRatio, 0, 1);
+    int refund = (int)Math.Floor(item.Price * ratio);
+    if (refund < 0) refund = 0;
+
+    StoreApi.GivePlayerCredits(player, refund);
+    RemovePlayerPermissionItem(player, itemName);
+    Storage.RemovePermissionItem(player.AuthorizedSteamID!.SteamId64, itemName);
+    player.PrintToChat(Localizer["sell.success", itemName, refund]);
   }
 
   [GameEventHandler]
   public HookResult OnPlayerJoin(EventPlayerTeam @event, GameEventInfo info)
   {
     var player = @event.Userid;
-    if (player == null)
-    {
-      return HookResult.Continue;
-    }
+    if (player == null) return HookResult.Continue;
+
     var items = Storage.GetPermissionItems(player.AuthorizedSteamID!.SteamId64);
-    items.ForEach(item =>
+    items.ForEach(itemName =>
     {
-      GivePlayerPermission(player, Config.Items[item].Permissions);
+      if (Config.Items.ContainsKey(itemName))
+        GivePlayerPermission(player, Config.Items[itemName].Permissions);
     });
     return HookResult.Continue;
   }
 
-  [CommandHelper(minArgs: 0, whoCanExecute: CommandUsage.CLIENT_ONLY)]
-  public void BuyCommand(CCSPlayerController? player, CommandInfo commandInfo)
+  private WasdModelMenu BuildMainMenu(CCSPlayerController player)
   {
-    if (player == null)
-    {
-      return;
-    }
     var menu = new WasdModelMenu { Title = Localizer["menu.title"] };
-    var playerAlreadyPurchases = Storage.GetPermissionItems(player.AuthorizedSteamID!.SteamId64);
-    Config.Items.ToList().ForEach(item =>
+    var owned = Storage.GetPermissionItems(player.AuthorizedSteamID!.SteamId64);
+
+    foreach (var kv in Config.Items.ToList())
+    {
+      if (owned.Contains(kv.Key))
+      {
+        int refund = (int)Math.Floor(kv.Value.Price * Math.Clamp(Config.SellRatio, 0, 1));
+        menu.AddOption(new SubMenuOption
         {
-          if (playerAlreadyPurchases.Contains(item.Key))
+          Text = $"{kv.Key} [{Localizer["menu.bought"]}]",
+          NextMenu = new WasdModelMenu
           {
-            menu.AddOption(new SelectOption
+            Title = Localizer["menu.manage", kv.Key],
+            Options = new List<MenuOption>
             {
-              Text = $"{item.Key} [{Localizer["menu.bought"]}]",
-              Select = (player, option, menu) =>
+              new SelectOption
               {
-                option.IsSelected = true;
+                Text = Localizer["menu.sell", refund],
+                Select = (p,o,sub)=>
+                {
+                  SellPlayerPermissionItem(p, kv.Key);
+                  MenuManager.OpenMainMenu(p, BuildMainMenu(p));
+                }
+              },
+              new SelectOption
+              {
+                Text = Localizer["menu.back"],
+                Select = (p,o,sub)=> { MenuManager.GetPlayer(p.Slot).Prev(); }
               }
-            });
-            return;
-
+            }
           }
+        });
+        continue;
+      }
 
-          menu.AddOption(new SubMenuOption
+      menu.AddOption(new SubMenuOption
+      {
+        Text = $"{kv.Key} [{kv.Value.Price}]",
+        NextMenu = new WasdModelMenu
+        {
+          Title = Localizer["menu.confirmtitle", kv.Key],
+          Options = new List<MenuOption>
           {
-            Text = $"{item.Key} [{item.Value.Price}]",
-            NextMenu = new WasdModelMenu
-            {
-              Title = Localizer["menu.confirmtitle", item.Key],
-              Options = new List<MenuOption>
-              {
             new SelectOption
             {
-              Text = Localizer["menu.confirm", item.Value.Price],
-              Select = (player, option, menu) =>
+              Text = Localizer["menu.confirm", kv.Value.Price],
+              Select = (p,o,sub)=>
               {
-                if (StoreApi!.GetPlayerCredits(player) < item.Value.Price)
+                if (StoreApi!.GetPlayerCredits(p) < kv.Value.Price)
                 {
-                  player.PrintToChat(Localizer["buy.insufficientcredits", item.Key]);
+                  p.PrintToChat(Localizer["buy.insufficientcredits", kv.Key]);
                   return;
                 }
-                StoreApi.GivePlayerCredits(player, -item.Value.Price);
-                GivePlayerPermissionItem(player, item.Key);
-                player.PrintToChat(Localizer["buy.success", item.Key]);
-                MenuManager.CloseMenu(player);
+                StoreApi.GivePlayerCredits(p, -kv.Value.Price);
+                GivePlayerPermissionItem(p, kv.Key);
+                p.PrintToChat(Localizer["buy.success", kv.Key]);
+                MenuManager.OpenMainMenu(p, BuildMainMenu(p));
               }
             },
             new SelectOption
             {
               Text = Localizer["menu.cancel"],
-              Select = (player, option, menu) =>
-              {
-                MenuManager.GetPlayer(player.Slot).Prev();
-              }
+              Select = (p,o,sub)=> { MenuManager.GetPlayer(p.Slot).Prev(); }
             }
-              }
-            }
-          });
-        });
+          }
+        }
+      });
+    }
 
-    MenuManager.OpenMainMenu(player, menu);
+    return menu;
+  }
+
+  [CommandHelper(minArgs: 0, whoCanExecute: CommandUsage.CLIENT_ONLY)]
+  public void BuyCommand(CCSPlayerController? player, CommandInfo commandInfo)
+  {
+    if (player == null) return;
+    MenuManager.OpenMainMenu(player, BuildMainMenu(player));
   }
 }

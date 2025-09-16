@@ -11,7 +11,7 @@
           "CounterStrikeSharp.API": "1.0.286",
           "Dapper": "2.1.35",
           "MySqlConnector": "2.3.7",
-          "StoreApi": "1.0.0.0"
+          "StoreApi": "24.0.0.0"
         },
         "runtime": {
           "Store-Permission.dll": {}
@@ -317,11 +317,11 @@
           "System.Text.Encodings.Web": "8.0.0"
         }
       },
-      "StoreApi/1.0.0.0": {
+      "StoreApi/24.0.0.0": {
         "runtime": {
           "StoreApi.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
+            "assemblyVersion": "24.0.0.0",
+            "fileVersion": "24.0.0.0"
           }
         }
       }
@@ -676,7 +676,7 @@
       "path": "system.text.json/8.0.0",
       "hashPath": "system.text.json.8.0.0.nupkg.sha512"
     },
-    "StoreApi/1.0.0.0": {
+    "StoreApi/24.0.0.0": {
       "type": "reference",
       "serviceable": false,
       "sha512": ""
